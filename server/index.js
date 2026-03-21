@@ -1,0 +1,58 @@
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const prisma = require('./prismaClient');
+const authRoutes = require('./routes/auth');
+const { authenticateToken } = require('./middleware/auth');
+const { errorHandler } = require('./middleware/errorHandler');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+if (!process.env.JWT_SECRET) {
+  console.error('Error: JWT_SECRET not set in environment');
+  process.exit(1);
+}
+
+app.use(helmet());
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+
+app.get('/', (req, res) => {
+  res.json({ message: 'Server is running' });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.use('/auth', authRoutes);
+
+app.get('/users', authenticateToken, async (req, res, next) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, email: true, name: true, createdAt: true }
+    });
+    res.json({ users });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/me', authenticateToken, async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { id: true, email: true, name: true, createdAt: true }
+    });
+    res.json({ user });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.use(errorHandler);
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
