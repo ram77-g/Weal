@@ -40,7 +40,19 @@ WEAL aims to create a safe, minimal, and meaningful space where people can expre
 
 ## Setup
 
-Instructions to run the project locally will be added as development progresses.
+1. Clone the repository
+
+2. Install PostgreSQL and create database `weal_db`
+
+3. Create [/server/.env](cci:7://file:///c:/Users/praka/OneDrive/Documents/Weal/server/.env:0:0-0:0) with:
+   DATABASE_URL="postgresql://postgres:PASSWORD@localhost:5432/weal_db?schema=public"
+   JWT_SECRET="your-secret-key"
+
+4. Run migrations: `cd server && npx prisma migrate dev`
+
+5. Start server: `npm run dev`
+
+6. Server runs on http://localhost:3000
 
 ## Contributing
 
