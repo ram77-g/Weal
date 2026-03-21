@@ -3,6 +3,9 @@ const cors = require('cors');
 const helmet = require('helmet');
 const prisma = require('./prismaClient');
 const authRoutes = require('./routes/auth');
+const postRoutes = require('./routes/posts');
+const commentRoutes = require('./routes/comments');
+const likeRoutes = require('./routes/likes');
 const { authenticateToken } = require('./middleware/auth');
 const { errorHandler } = require('./middleware/errorHandler');
 
@@ -27,6 +30,9 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/auth', authRoutes);
+app.use('/posts', postRoutes);
+app.use('/comments', commentRoutes);
+app.use('/likes', likeRoutes);
 
 app.get('/users', authenticateToken, async (req, res, next) => {
   try {
