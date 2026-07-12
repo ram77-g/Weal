@@ -19,6 +19,8 @@ export default function CommentThread({
   onCreateComment,
   onLikeComment,
   onDeleteComment,
+  onEditComment,
+  onMuteUser,
   onAddEmoji
 }) {
   return (
@@ -31,19 +33,39 @@ export default function CommentThread({
       {/* Comment header */}
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold">
-            {comment.isAnonymous ? '🎭 Anonymous' : (comment.author?.name || 'User')}
-          </p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-semibold">
+              {comment.isAnonymous ? '🎭 Anonymous' : (comment.author?.name || 'User')}
+            </p>
+            {comment.author?.role === 'ADMIN' && !comment.isAnonymous && (
+              <span className="bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider shadow-sm">
+                WEAL Official
+              </span>
+            )}
+          </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {new Date(comment.createdAt).toLocaleString()}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {isAuthenticated && !comment.isAnonymous && comment.author?.id === user?.id && (
+          {isAuthenticated && user?.role === 'ADMIN' && !comment.isAnonymous && comment.author?.id !== user?.id && comment.author?.role !== 'ADMIN' && (
+            <button
+              onClick={() => onMuteUser(comment.author?.id)}
+              className="text-slate-400 hover:text-orange-500 transition-colors"
+              title="Mute user (prevent commenting)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                <line x1="23" y1="9" x2="17" y2="15"/>
+                <line x1="17" y1="9" x2="23" y2="15"/>
+              </svg>
+            </button>
+          )}
+          {isAuthenticated && (!comment.isAnonymous && comment.author?.id === user?.id || user?.role === 'ADMIN') && (
             <button
               onClick={() => onDeleteComment(comment.id)}
               className="text-slate-400 hover:text-red-500 transition-colors"
-              title="Delete comment"
+              title={user?.role === 'ADMIN' && comment.author?.id !== user?.id ? "Delete comment (Admin override)" : "Delete comment"}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6"/>
@@ -51,6 +73,18 @@ export default function CommentThread({
                 <path d="M10 11v6"/>
                 <path d="M14 11v6"/>
                 <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+            </button>
+          )}
+          {isAuthenticated && user?.role === 'ADMIN' && (
+            <button
+              onClick={() => onEditComment(comment)}
+              className="text-slate-400 hover:text-indigo-500 transition-colors"
+              title="Edit comment (Admin override)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
             </button>
           )}
@@ -149,6 +183,8 @@ export default function CommentThread({
               onCreateComment={onCreateComment}
               onLikeComment={onLikeComment}
               onDeleteComment={onDeleteComment}
+              onEditComment={onEditComment}
+              onMuteUser={onMuteUser}
               onAddEmoji={onAddEmoji}
             />
           ))}

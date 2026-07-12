@@ -79,9 +79,14 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// Create post (authenticated)
+// Create post (admin only)
 router.post('/', authenticateToken, async (req, res, next) => {
   try {
+    // Only admins can create posts
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Only admins can create posts' });
+    }
+
     const { title, content, isAnonymous, imageUrl } = req.body;
 
     validatePost(title, content);

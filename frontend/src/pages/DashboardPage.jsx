@@ -7,6 +7,7 @@ import PostCard from '../components/PostCard'
 import CommentThread from '../components/CommentThread'
 import EmojiPicker from '../components/EmojiPicker'
 import EditPostModal from '../components/EditPostModal'
+import EditCommentModal from '../components/EditCommentModal'
 import CreatePostModal from '../components/CreatePostModal'
 
 const POSTS_PER_PAGE = 5
@@ -40,6 +41,7 @@ export default function DashboardPage() {
   // Modals
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingPost, setEditingPost] = useState(null)
+  const [editingComment, setEditingComment] = useState(null)
 
   const searchInputRef = useRef(null)
 
@@ -258,6 +260,47 @@ export default function DashboardPage() {
     }
   }
 
+  const handleMuteUser = async (userId) => {
+    if (!isAdmin) return;
+    if (!window.confirm('Are you sure you want to mute this user? They will no longer be able to comment.')) return;
+    
+    try {
+      const res = await fetch(`${API_URL}/admin/users/${userId}/mute`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ isMuted: true })
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to mute user');
+      }
+      setStatus({ message: 'User has been muted successfully', type: 'success' });
+    } catch (err) {
+      setStatus({ message: err.message, type: 'error' });
+    }
+  }
+
+  const handleSaveEditedComment = async ({ id, content }) => {
+    if (!content.trim()) return
+    try {
+      const res = await fetch(`${API_URL}/admin/comments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ content: content.trim() })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to edit comment')
+      setEditingComment(null)
+      await fetchCommentsForPost(selectedPost?.id)
+      setStatus({ message: 'Comment updated', type: 'success' })
+    } catch (err) {
+      setStatus({ message: err.message || 'Failed to edit comment', type: 'error' })
+    }
+  }
+
   const handleEditPost = async ({ id, title, content }) => {
     if (!title.trim() || !content.trim()) return
     if (title.trim().length < 3 || title.trim().length > 200) {
@@ -374,15 +417,17 @@ export default function DashboardPage() {
               </svg>
               <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Search</span>
             </button>
-            <button
-              onClick={() => setIsCreateOpen(true)}
-              className="flex items-center gap-4 px-2 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-bold text-sm text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 shrink-0">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Create</span>
-            </button>
+            {user?.role === 'ADMIN' && (
+              <button
+                onClick={() => setIsCreateOpen(true)}
+                className="flex items-center gap-4 px-2 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-bold text-sm text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 shrink-0">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Create</span>
+              </button>
+            )}
             <button
               onClick={() => navigate('/profile')}
               className="flex items-center gap-4 px-2 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-bold text-sm text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400"
@@ -579,23 +624,15 @@ export default function DashboardPage() {
                 {/* Header showing selected post author */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-850">
                   <div className="flex items-center gap-2.5">
-                    {!selectedPost.isAnonymous && selectedPost.author?.profilePicture ? (
-                      <img src={getImageSrc(selectedPost.author.profilePicture)} alt="Author" className="h-8 w-8 rounded-full object-cover border border-white shadow-sm" />
-                    ) : (
-                      <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center text-xs border border-white shadow-sm">
-                        {selectedPost.isAnonymous ? '🎭' : (selectedPost.author?.name || 'User').slice(0, 1).toUpperCase()}
-                      </div>
-                    )}
+                    <img src="/weal_logo.png" alt="WEAL" className="h-8 w-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-sm bg-indigo-950" />
                     <div>
                       <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-200 leading-none hover:underline cursor-pointer">
-                        {selectedPost.isAnonymous ? 'Anonymous' : (selectedPost.author?.name || 'User')}
+                        WEAL
                       </h4>
                       <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Post details</span>
                     </div>
                   </div>
-                  <button onClick={() => setSelectedPostId(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold transition-transform active:scale-95">
-                    ✕ Close
-                  </button>
+
                 </div>
 
                 {/* Main scrollable body (original post text + comment threads) */}
@@ -649,6 +686,8 @@ export default function DashboardPage() {
                           onCreateComment={(parentCommentId, isAnon) => handleCreateComment(parentCommentId, isAnon)}
                           onLikeComment={handleLikeComment}
                           onDeleteComment={handleDeleteComment}
+                          onEditComment={(comment) => setEditingComment(comment)}
+                          onMuteUser={handleMuteUser}
                           onAddEmoji={(emoji, parentId) => addEmojiToDraft(emoji, parentId)}
                         />
                       ))
@@ -744,7 +783,9 @@ export default function DashboardPage() {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex justify-around items-center py-2 z-40 shadow-lg select-none">
         <button onClick={() => navigate('/')} className="text-xl p-2 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" title="Home">🏠</button>
         <button onClick={() => { setSelectedPostId(null); setPostPage(1); setSelectedTag(''); setSearchQuery('') }} className="text-xl p-2 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" title="Feed">🧭</button>
-        <button onClick={() => setIsCreateOpen(true)} className="text-xl p-2 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" title="Create">➕</button>
+        {user?.role === 'ADMIN' && (
+          <button onClick={() => setIsCreateOpen(true)} className="text-xl p-2 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" title="Create">➕</button>
+        )}
         <button onClick={() => navigate('/profile')} className="text-xl p-2 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" title="Profile">👤</button>
         <button onClick={handleLogout} className="text-xl p-2 text-rose-500 hover:text-rose-600 transition-colors" title="Logout">🚪</button>
       </nav>
@@ -754,6 +795,7 @@ export default function DashboardPage() {
       {/* Modals */}
       <CreatePostModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} onSave={handleCreatePost} loading={loading} setStatus={setStatus} />
       <EditPostModal post={editingPost} onClose={() => setEditingPost(null)} onSave={handleEditPost} />
+      <EditCommentModal comment={editingComment} onClose={() => setEditingComment(null)} onSave={handleSaveEditedComment} />
     </div>
   )
 }

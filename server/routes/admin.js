@@ -99,6 +99,25 @@ router.patch('/users/:id/role', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+// Toggle mute status for a user
+router.patch('/users/:id/mute', async (req, res, next) => {
+  try {
+    const { isMuted } = req.body;
+    if (typeof isMuted !== 'boolean') {
+      return res.status(400).json({ error: 'isMuted must be a boolean' });
+    }
+    if (req.params.id === req.user.id) {
+      return res.status(403).json({ error: 'Cannot mute your own account' });
+    }
+    const updated = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { isMuted },
+      select: { id: true, email: true, name: true, role: true, isMuted: true }
+    });
+    res.json({ user: updated });
+  } catch (error) { next(error); }
+});
+
 // Edit any post (Admin only)
 router.put('/posts/:id', async (req, res, next) => {
   try {

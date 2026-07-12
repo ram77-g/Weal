@@ -24,6 +24,7 @@ model User {
   dateOfBirth   String?
   profilePicture String?
   role          Role          @default(USER)
+  isMuted       Boolean       @default(false)
   refreshToken  String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt

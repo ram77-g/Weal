@@ -19,7 +19,7 @@ router.get('/post/:postId', async (req, res, next) => {
       where: { postId },
       orderBy: { createdAt: 'asc' },
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, role: true } },
         likes: { select: { userId: true } }
       }
     });
@@ -58,6 +58,11 @@ router.post('/', authenticateToken, async (req, res, next) => {
 
     if (!postId || !content) {
       throw Object.assign(new Error('Post ID and content are required'), { name: 'ValidationError' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
+    if (!user || user.isMuted) {
+      return res.status(403).json({ error: 'You have been muted and cannot post comments.' });
     }
 
     if (content.length < 1 || content.length > 2000) {
@@ -103,8 +108,12 @@ router.delete('/:id', authenticateToken, async (req, res, next) => {
 
     const existingComment = await prisma.comment.findUnique({ where: { id: commentId } });
 
-    if (!existingComment || existingComment.authorId !== req.user.userId) {
-      throw Object.assign(new Error('Comment not found or unauthorized'), { name: 'ValidationError' });
+    if (!existingComment) {
+      throw Object.assign(new Error('Comment not found'), { name: 'ValidationError' });
+    }
+
+    if (existingComment.authorId !== req.user.userId && req.user.role !== 'ADMIN') {
+      throw Object.assign(new Error('Unauthorized to delete this comment'), { name: 'ValidationError' });
     }
 
     await prisma.comment.delete({ where: { id: commentId } });

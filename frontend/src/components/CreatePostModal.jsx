@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import EmojiPicker from './EmojiPicker'
 
 export default function CreatePostModal({ isOpen, onClose, onSave, loading, setStatus }) {
   const [title, setTitle] = useState('')
@@ -7,7 +8,10 @@ export default function CreatePostModal({ isOpen, onClose, onSave, loading, setS
   const [isAnonymous, setIsAnonymous] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const [customTag, setCustomTag] = useState('')
+  const [showEmojis, setShowEmojis] = useState(false)
   const fileInputRef = useRef(null)
+
+  const handleEmojiSelect = (emoji) => setContent(prev => prev + emoji)
 
   if (!isOpen) return null
 
@@ -183,7 +187,13 @@ export default function CreatePostModal({ isOpen, onClose, onSave, loading, setS
 
             {/* Description Content */}
             <div>
-              <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 mb-1">Share your story</label>
+              <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 mb-2">Share your story</label>
+              <EmojiPicker 
+                expanded={showEmojis} 
+                onToggle={() => setShowEmojis(!showEmojis)} 
+                onSelect={handleEmojiSelect} 
+                id="create-post-"
+              />
               <textarea 
                 value={content} 
                 onChange={(e) => setContent(e.target.value)} 

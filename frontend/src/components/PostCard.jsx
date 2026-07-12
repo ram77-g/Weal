@@ -88,22 +88,12 @@ export default function PostCard({ post, isSelected, user, onSelect, onLike, onE
         <div className="flex items-center gap-3">
           {/* Avatar with Gradient border indicating check-in story */}
           <div className={`p-[2.5px] rounded-full ${hasStory ? 'story-gradient' : 'bg-transparent'}`}>
-            {!post.isAnonymous && post.author?.profilePicture ? (
-              <img src={getImageSrc(post.author.profilePicture)} alt="Author" className="h-10 w-10 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
-            ) : (
-              <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold text-white select-none border-2 border-white dark:border-slate-900 ${
-                post.isAnonymous
-                  ? 'bg-gradient-to-tr from-purple-500 via-pink-500 to-red-400'
-                  : 'bg-gradient-to-tr from-indigo-500 to-purple-600'
-              }`}>
-                {initial}
-              </div>
-            )}
+            <img src="/weal_logo.png" alt="WEAL" className="h-10 w-10 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm bg-indigo-950" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h4 className="text-sm font-bold leading-none hover:underline cursor-pointer" onClick={() => onSelect(post.id)}>
-                {post.isAnonymous ? 'Anonymous' : (post.author?.name || 'User')}
+                WEAL
               </h4>
               {post.author?.checkedInToday && (
                 <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full" title={`Feeling ${post.author.checkedInToday}`}>
@@ -121,22 +111,7 @@ export default function PostCard({ post, isSelected, user, onSelect, onLike, onE
           </div>
         </div>
 
-        {/* Options / Edit */}
-        {!post.isAnonymous && post.author?.id === user?.id && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onEdit(post)
-            }}
-            className="text-xs px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-700 text-slate-500 hover:text-indigo-600 font-semibold transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-1.5"
-            title="Edit post"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-3.5 h-3.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-            </svg>
-            Edit
-          </button>
-        )}
+
       </div>
 
       {/* Content Body */}
